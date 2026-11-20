@@ -24,11 +24,18 @@ from pathlib import Path
 def main() -> int:
     here = Path(__file__).resolve().parent
     source = here / "entry.png"
+    if not source.is_file():
+        print(f"missing source image: {source}", file=sys.stderr)
+        return 1
+    source_digest = hashlib.sha256(source.read_bytes()).hexdigest()
     out_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
     out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / "entry.png"
     shutil.copyfile(source, target)
     digest = hashlib.sha256(target.read_bytes()).hexdigest()
+    if digest != source_digest:
+        print(f"mismatch: output {digest} != source {source_digest}", file=sys.stderr)
+        return 1
     print(f"wrote {target} ({target.stat().st_size} bytes, sha256 {digest})")
     return 0
 
